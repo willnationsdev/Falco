@@ -1,36 +1,26 @@
+
 module HelloWorld.Program
 
 open Falco
 open Falco.Markup
+open Falco.Routing
 
-let message = "Hello, world!"
+let endpoints = 
+  [            
+      get "/greet/{name:alpha}"
+          (Request.mapRoute (fun r -> r.["name"] |> sprintf "Hi %s") Response.ofPlainText)
 
-let layout message =
-    Elem.html [] [
-            Elem.head [] [
-                    Elem.title [] [ Text.raw message ]
-                ]
-            Elem.body [] [
-                    Elem.h1 [] [ Text.raw message ]
-                ]
-        ]
+      get "/json" 
+          (Response.ofJson {| Message = "Hello from /json" |})
 
-let handleIndex =
-    get "/" (Response.ofPlainText message)
+      get "/html" 
+          (Response.ofHtml (Templates.html5 "en" [] [ Elem.h1 [] [ Text.raw "Hello from /html" ] ]))
 
-let handleJson =
-    get "/json" (Response.ofJson {| Message = message |})
-
-let handleHtml =
-    get "/html" (Response.ofHtml (layout message))
+      get "/" 
+          (Response.ofPlainText "Hello from /")
+  ]
 
 [<EntryPoint>]
-let main args =        
-    Host.startWebHostDefault 
-        args 
-        [
-            handleHtml
-            handleJson
-            handleIndex
-        ]
-    0
+let main args =            
+  Host.startWebHostDefault args endpoints
+  0

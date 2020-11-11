@@ -2,6 +2,7 @@
 
 open Xunit
 open Falco
+open Falco.Routing
 open FsUnit.Xunit
 
 let emptyHandler : HttpHandler = Response.ofPlainText ""
@@ -10,11 +11,13 @@ let emptyHandler : HttpHandler = Response.ofPlainText ""
 let ``route function should return valid HttpEndpoint`` () =    
     let routeVerb = GET
     let routePattern = "/"
+
     let endpoint = route routeVerb routePattern emptyHandler
-    
-    endpoint.Verb    |> should equal routeVerb
     endpoint.Pattern |> should equal routePattern
-    endpoint.Handler |> should be instanceOfType<HttpHandler>
+    
+    let endpointHandler = endpoint.Handlers.Head
+    endpointHandler.Verb    |> should equal routeVerb
+    endpointHandler.HttpHandler |> should be instanceOfType<HttpHandler>
 
 let testEndpointFunction 
     (fn : MapHttpEndpoint)
@@ -22,7 +25,9 @@ let testEndpointFunction
     let pattern = "/"
     let endpoint = fn pattern emptyHandler
     endpoint.Pattern |> should equal pattern
-    endpoint.Verb    |> should equal verb
+    let endpointHandler = endpoint.Handlers.Head
+    endpointHandler.Verb    |> should equal verb
+    endpointHandler.HttpHandler |> should be instanceOfType<HttpHandler>
 
 [<Fact>]
 let ``any function returns HttpEndpoint matching ANY HttpVerb`` () = 
@@ -38,4 +43,3 @@ let ``any function returns HttpEndpoint matching ANY HttpVerb`` () =
         trace, TRACE
     ]
     |> List.iter (fun (fn, verb) -> testEndpointFunction fn verb)
-
