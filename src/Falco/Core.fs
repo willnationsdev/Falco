@@ -49,6 +49,10 @@ type HttpVerb =
     | OPTIONS
     | TRACE
     | ANY
+    with
+        member this.toString =
+            match FSharp.Reflection.FSharpValue.GetUnionFields(this, typeof<HttpVerb>) with
+            | case, _ -> case.Name
 
 /// The eventual return of asynchronous HttpContext processing
 type HttpHandler = 
@@ -62,11 +66,23 @@ module HttpHandler =
 /// In-and-out processing of a HttpContext
 type HttpResponseModifier = HttpContext -> HttpContext
 
+/// More detailed route information for integration with MVC frameworks
+type HttpMvcRoutingData =
+    {
+        Name: string
+        Area: string
+        Controller: string
+        Action: string
+        Constraints: (string * obj) list
+        Defaults: (string * obj) list
+    }
+
 /// Specifies an association of a route pattern to a collection of HttpEndpointHandler
 type HttpEndpoint = 
     {
         Pattern  : string   
         Handlers : (HttpVerb * HttpHandler) list
+        MvcData  : HttpMvcRoutingData option
     }
 
 /// The process of associating a route and handler

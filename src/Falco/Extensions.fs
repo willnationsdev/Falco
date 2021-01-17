@@ -158,16 +158,28 @@ type IApplicationBuilder with
                     for (verb, handler) in endpoint.Handlers do
                         let requestDelegate = HttpHandler.toRequestDelegate handler
 
-                        match verb with
-                        | GET     -> r.MapGet(endpoint.Pattern, requestDelegate)
-                        | HEAD    -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Head ], requestDelegate)
-                        | POST    -> r.MapPost(endpoint.Pattern, requestDelegate)
-                        | PUT     -> r.MapPut(endpoint.Pattern, requestDelegate)
-                        | PATCH   -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Patch ], requestDelegate)
-                        | DELETE  -> r.MapDelete(endpoint.Pattern, requestDelegate)
-                        | OPTIONS -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Options ], requestDelegate)
-                        | TRACE   -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Trace ], requestDelegate)
-                        | ANY     -> r.Map(endpoint.Pattern, requestDelegate)
+                        match endpoint.MvcData with
+                        | None ->
+                            match verb with
+                            | GET     -> r.MapGet(endpoint.Pattern, requestDelegate)
+                            | HEAD    -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Head ], requestDelegate)
+                            | POST    -> r.MapPost(endpoint.Pattern, requestDelegate)
+                            | PUT     -> r.MapPut(endpoint.Pattern, requestDelegate)
+                            | PATCH   -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Patch ], requestDelegate)
+                            | DELETE  -> r.MapDelete(endpoint.Pattern, requestDelegate)
+                            | OPTIONS -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Options ], requestDelegate)
+                            | TRACE   -> r.MapMethods(endpoint.Pattern, [ HttpMethods.Trace ], requestDelegate)
+                            | ANY     -> r.Map(endpoint.Pattern, requestDelegate)
+                        | Some mvcData -> 
+                            let ``constraint`` = "constraint", box <| new Constraints.HttpMethodRouteConstraint(verb.toString)
+                            let defaults = [ "controller", box mvcData.Controller; "action", box mvcData.Action ]
+                            r.MapAreaControllerRoute(
+                                name = mvcData.Name,
+                                areaName = mvcData.Area,
+                                pattern = endpoint.Pattern,
+                                defaults = dict (defaults @ mvcData.Defaults),
+                                constraints = dict (``constraint``::mvcData.Constraints)
+                                ) :> IEndpointConventionBuilder
                         |> ignore)
 
     /// Register a Falco HttpHandler as exception handler lambda

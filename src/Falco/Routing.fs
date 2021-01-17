@@ -2,7 +2,7 @@
 
 /// Constructor for multi-method HttpEndpoint
 let all (pattern : string) (handlers : (HttpVerb * HttpHandler) list) : HttpEndpoint =        
-    { Pattern  = pattern; Handlers = handlers  }
+    { Pattern  = pattern; Handlers = handlers; MvcData = None }
 
 /// Constructor for a singular HttpEndpoint
 let route (verb : HttpVerb) (pattern : string) (handler : HttpHandler) : HttpEndpoint =   
@@ -34,3 +34,6 @@ let options : MapHttpEndpoint = route OPTIONS
 
 /// TRACE HttpEndpoint construct
 let trace : MapHttpEndpoint = route TRACE
+
+let withMvc (mvcData : HttpMvcRoutingData) (endpoint : HttpEndpoint) =
+    { endpoint with MvcData = Some mvcData }
